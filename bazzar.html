@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Food Ordering System</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f7fa;
+      margin: 20px;
+      color: #333;
+    }
+    h1, h2, h3 {
+      color: #2c3e50;
+    }
+    .menu-title {
+      background-color: #2c3e50;
+      color: #ffffff;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 24px;
+      margin-top: -20px;
+      margin-left: -20px;
+      margin-right: -20px;
+    }
+    .container {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .menu-item, #order-summary, #transaction-history {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 320px;
+      transition: transform 0.3s ease;
+    }
+    .menu-item:hover {
+      transform: translateY(-5px);
+    }
+    input[type="number"] {
+      width: 100px;
+      padding: 8px;
+      border: 2px solid #4CAF50;
+      border-radius: 5px;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: #ffffff;
+      padding: 12px 24px;
+      border: none;
+      cursor: pointer;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: background-color 0.3s, transform 0.2s;
+      margin: 10px;
+    }
+    button:hover {
+      background-color: #45a049;
+      transform: scale(1.05);
+    }
+    button:active {
+      background-color: #3d8b40;
+    }
+    .error {
+      color: #e74c3c;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    .history-item {
+      background-color: #eaf7f0;
+      padding: 12px;
+      margin-bottom: 12px;
+      border-left: 4px solid #4CAF50;
+      border-radius: 8px;
+    }
+    #order-summary, #transaction-history {
+      margin-top: 20px;
+      display: none;
+    }
+    .button-cont {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .cash-section {
+      text-align: center;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1 class="menu-title">Food Ordering System</h1>
+  <div class="container">
+    <div class="menu-item">
+      <h3>Tahu Walik</h3>
+      <p>Price: IDR 20,000</p>
+      <p>Stock: <span id="tahu-stock">190</span></p>
+      <input type="number" id="tahu-qty" value="0" min="0"/>
+    </div>
+    <div class="menu-item">
+      <h3>Mac and Cheese</h3>
+      <p>Price: IDR 10,000</p>
+      <p>Stock: <span id="mc-stock">150</span></p>
+      <input type="number" id="mc-qty" value="0" min="0"/>
+    </div>
+  </div>
+  <div class="cash-section">
+    <label for="order-number"><strong>Order Number:</strong></label>
+    <input type="text" id="order-number" placeholder="Enter Order Number" />
+  </div>
+  <div class="button-cont">
+    <button onclick="processOrder()">Place Order</button>
+    <button onclick="toggleTransactionHistory()" id="toggle-history-btn">View History</button>
+    <button onclick="clearHistory()">Clear History</button>
+    <button onclick="resetSystem()">Reset System</button>
+  </div>
+  <div id="order-summary">
+    <h2>Order Summary</h2>
+    <ul id="summary-text"></ul>
+    <p><strong>Total: IDR <span id="total-price">0</span></strong></p>
+    <p id="error-message" class="error" style="display: none;"></p>
+    <button onclick="hideOrderSummary()">Close</button>
+  </div>
+  <div id="transaction-history">
+    <h2>Transaction History</h2>
+    <div id="history-list"></div>
+  </div>
+<script>
+  const tahuPrice = 20000, mcPrice = 10000;
+  let tahuStock, mcStock;
+  function processOrder() {
+    const orderNumber = document.getElementById('order-number').value.trim();
+    const tahuQty = +document.getElementById('tahu-qty').value || 0;
+    const mcQty = +document.getElementById('mc-qty').value || 0;
+    const total = (tahuQty * tahuPrice) + (mcQty * mcPrice);
+    if (!orderNumber) {
+      displayError("Please enter an order number.");
+      return;
+    }
+    if (tahuQty > tahuStock || mcQty > mcStock) {
+      displayError("Insufficient stock.");
+      return;
+    }
+    updateStock(tahuQty, mcQty);
+    recordTransaction(orderNumber, tahuQty, mcQty, total);
+    updateOrderSummary(tahuQty, mcQty, total);
+    clearError();
+    document.getElementById('order-number').value = "";
+    document.getElementById('tahu-qty').value = 0;
+    document.getElementById('mc-qty').value = 0;
+  }
+  function loadStock() {
+    tahuStock = parseInt(localStorage.getItem('tahuStock')) || 190;
+    mcStock = parseInt(localStorage.getItem('mcStock')) || 150;
+    document.getElementById('tahu-stock').textContent = tahuStock;
+    document.getElementById('mc-stock').textContent = mcStock;
+  }
+  function updateStock(tahuQty, mcQty) {
+    tahuStock -= tahuQty;
+    mcStock -= mcQty;
+    localStorage.setItem('tahuStock', tahuStock);
+    localStorage.setItem('mcStock', mcStock);
+    document.getElementById('tahu-stock').textContent = tahuStock;
+    document.getElementById('mc-stock').textContent = mcStock;
+  }
+  function recordTransaction(orderNumber, tahuQty, mcQty, total) {
+    const transaction = {
+      id: Date.now(),
+      orderNumber,
+      tahuQty,
+      mcQty,
+      total,
+      timestamp: new Date().toLocaleString()
+    };
+    let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+    transactions.push(transaction);
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+    displayTransaction(transaction);
+  }
+  function displayTransaction(t) {
+    const html = `
+      <div class="history-item" id="tx-${t.id}">
+        <p><strong>Order #${t.orderNumber}</strong> - ${t.timestamp}</p>
+        ${t.tahuQty > 0 ? `<p>${t.tahuQty} Tahu Walik - IDR ${(t.tahuQty * tahuPrice).toLocaleString()}</p>` : ""}
+        ${t.mcQty > 0 ? `<p>${t.mcQty} Mac and Cheese - IDR ${(t.mcQty * mcPrice).toLocaleString()}</p>` : ""}
+        <p><strong>Total:</strong> IDR ${t.total.toLocaleString()}</p>
+        <button onclick="deleteTransaction(${t.id})">Delete</button>
+      </div>
+    `;
+    document.getElementById('history-list').innerHTML += html;
+  }
+  function updateOrderSummary(tahuQty, mcQty, total) {
+    document.getElementById('summary-text').innerHTML = `
+      ${tahuQty > 0 ? `<li>${tahuQty} Tahu Walik - IDR ${(tahuQty * tahuPrice).toLocaleString()}</li>` : ""}
+      ${mcQty > 0 ? `<li>${mcQty} Mac and Cheese - IDR ${(mcQty * mcPrice).toLocaleString()}</li>` : ""}
+    `;
+    document.getElementById('total-price').textContent = total.toLocaleString();
+    document.getElementById('order-summary').style.display = 'block';
+  }
+  function displayError(message) {
+    const error = document.getElementById("error-message");
+    error.textContent = message;
+    error.style.display = "block";
+  }
+  function clearError() {
+    document.getElementById("error-message").style.display = "none";
+  }
+  function toggleTransactionHistory() {
+    const history = document.getElementById('transaction-history');
+    const button = document.getElementById('toggle-history-btn');
+    if (history.style.display === 'none') {
+      history.style.display = 'block';
+      button.textContent = 'Hide History';
+    } else {
+      history.style.display = 'none';
+      button.textContent = 'View History';
+    }
+  }
+  function hideOrderSummary() {
+    document.getElementById('order-summary').style.display = 'none';
+  }
+  function clearHistory() {
+    localStorage.removeItem('transactions');
+    document.getElementById('history-list').innerHTML = "";
+  }
+  function deleteTransaction(id) {
+  let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+  const transactionToDelete = transactions.find(t => t.id === id);
+  if (!transactionToDelete) return;
+  tahuStock += transactionToDelete.tahuQty;
+  mcStock += transactionToDelete.mcQty;
+  localStorage.setItem('tahuStock', tahuStock);
+  localStorage.setItem('mcStock', mcStock);
+  document.getElementById('tahu-stock').textContent = tahuStock;
+  document.getElementById('mc-stock').textContent = mcStock;
+  transactions = transactions.filter(t => t.id !== id);
+  localStorage.setItem('transactions', JSON.stringify(transactions));
+  const element = document.getElementById(`tx-${id}`);
+  if (element) element.remove();
+}
+
+function resetSystem() {
+  localStorage.clear();
+  tahuStock = 190;
+  mcStock = 150;
+  document.getElementById('tahu-stock').textContent = '190';
+  document.getElementById('mc-stock').textContent = '150';
+  document.getElementById('order-number').value = "";
+  document.getElementById('tahu-qty').value = 0;
+  document.getElementById('mc-qty').value = 0;
+  document.getElementById('order-summary').style.display = 'none';
+  document.getElementById('summary-text').innerHTML = "";
+  document.getElementById('total-price').textContent = "0";
+  document.getElementById('transaction-history').style.display = 'none';
+  document.getElementById('history-list').innerHTML = "";
+  document.getElementById('toggle-history-btn').textContent = 'View History';
+  clearError();
+  alert('System reset successfully.');
+}
+  window.onload = () => {
+    loadStock();
+    const transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+    transactions.forEach(displayTransaction);
+  };
+</script>
+</body>
+</html>  
