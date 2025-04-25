@@ -95,7 +95,7 @@
   </style>
 </head>
 <body>
-  <h1 class="menu-title">Food Ordering System</h1>
+  <h1 class="menu-title">- XI A -</h1>
   <div class="container">
     <div class="menu-item">
       <h3>Tahu Walik</h3>
@@ -106,7 +106,7 @@
     <div class="menu-item">
       <h3>Mac and Cheese</h3>
       <p>Price: IDR 10,000</p>
-      <p>Stock: <span id="mc-stock">150</span></p>
+      <p>Stock: <span id="mc-stock">140</span></p>
       <input type="number" id="mc-qty" value="0" min="0"/>
     </div>
   </div>
@@ -157,7 +157,7 @@
   }
   function loadStock() {
     tahuStock = parseInt(localStorage.getItem('tahuStock')) || 190;
-    mcStock = parseInt(localStorage.getItem('mcStock')) || 150;
+    mcStock = parseInt(localStorage.getItem('mcStock')) || 140;
     document.getElementById('tahu-stock').textContent = tahuStock;
     document.getElementById('mc-stock').textContent = mcStock;
   }
@@ -248,9 +248,9 @@
 function resetSystem() {
   localStorage.clear();
   tahuStock = 190;
-  mcStock = 150;
+  mcStock = 140;
   document.getElementById('tahu-stock').textContent = '190';
-  document.getElementById('mc-stock').textContent = '150';
+  document.getElementById('mc-stock').textContent = '140';
   document.getElementById('order-number').value = "";
   document.getElementById('tahu-qty').value = 0;
   document.getElementById('mc-qty').value = 0;
